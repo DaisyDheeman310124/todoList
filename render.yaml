@@ -1,6 +1,7 @@
 services:
   - type: web
     name: todoList-backend
+    plan: free
     runtime: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
