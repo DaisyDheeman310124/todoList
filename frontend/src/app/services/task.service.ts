@@ -8,56 +8,55 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class TaskService {
-  private apiUrl = environment.apiUrl;
-  private authUrl = environment.apiUrl.replace('/tasks', '');
+  private apiUrl = environment.apiUrl; // Now this is '.../api'
 
   constructor(private http: HttpClient) { }
 
   register(userData: any): Observable<any> {
-    return this.http.post(`${this.authUrl}/register`, userData);
+    return this.http.post(`${this.apiUrl}/register`, userData);
   }
 
   login(userData: any): Observable<any> {
-    return this.http.post(`${this.authUrl}/login`, userData);
+    return this.http.post(`${this.apiUrl}/login`, userData);
   }
 
   getSecurityQuestion(email: string): Observable<any> {
-    return this.http.post(`${this.authUrl}/forgot-password/question`, { email });
+    return this.http.post(`${this.apiUrl}/forgot-password/question`, { email });
   }
 
   resetPassword(data: any): Observable<any> {
-    return this.http.post(`${this.authUrl}/forgot-password/reset`, data);
+    return this.http.post(`${this.apiUrl}/forgot-password/reset`, data);
   }
 
   // Admin User Management
   getUsers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.authUrl}/admin/users`);
+    return this.http.get<any[]>(`${this.apiUrl}/admin/users`);
   }
 
   blockUser(id: string): Observable<any> {
-    return this.http.patch(`${this.authUrl}/admin/users/${id}/block`, {});
+    return this.http.patch(`${this.apiUrl}/admin/users/${id}/block`, {});
   }
 
   deleteUser(id: string): Observable<any> {
-    return this.http.delete(`${this.authUrl}/admin/users/${id}`);
+    return this.http.delete(`${this.apiUrl}/admin/users/${id}`);
   }
 
   // Tasks
   getTasks(userId?: string): Observable<Task[]> {
-    const url = userId ? `${this.apiUrl}?userId=${userId}` : this.apiUrl;
+    const url = userId ? `${this.apiUrl}/tasks?userId=${userId}` : `${this.apiUrl}/tasks`;
     return this.http.get<Task[]>(url);
   }
 
   addTask(task: Task): Observable<Task> {
-    return this.http.post<Task>(this.apiUrl, task);
+    return this.http.post<Task>(`${this.apiUrl}/tasks`, task);
   }
 
   updateTask(task: Task): Observable<Task> {
-    return this.http.put<Task>(`${this.apiUrl}/${task._id}`, task);
+    return this.http.put<Task>(`${this.apiUrl}/tasks/${task._id}`, task);
   }
 
   deleteTask(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+    return this.http.delete(`${this.apiUrl}/tasks/${id}`);
   }
 
   isLoggedIn(): boolean {

@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://todolist-backend-kquq.onrender.com/api/tasks'
+  apiUrl: 'https://backend-one-eta-50.vercel.app/api'
 };
