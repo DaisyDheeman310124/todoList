@@ -11,8 +11,21 @@ const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey123';
 const ADMIN_EMAIL = 'amitkumar310124@gmail.com';
 
 // Middleware
-app.use(cors({ origin: '*' }));
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Handle Preflight
+app.options('*', cors());
+
 app.use(express.json());
+
+// Health Check
+app.get('/', (req, res) => {
+    res.send('Todo API is running...');
+});
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://amitkumar310124_db_user:Amit2300@cluster0.twyfemg.mongodb.net/taskdb';
@@ -74,7 +87,7 @@ app.post('/api/register', async (req, res) => {
             email, 
             password: hashedPassword, 
             securityQuestion, 
-            securityAnswer: securityAnswer.toLowerCase() // Save in lowercase for easier matching
+            securityAnswer: securityAnswer.trim().toLowerCase() 
         });
         await user.save();
         res.status(201).json({ message: 'User registered' });
@@ -124,7 +137,7 @@ app.post('/api/forgot-password/reset', async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: 'User not found' });
         
-        if (user.securityAnswer !== answer.toLowerCase()) {
+        if (user.securityAnswer !== answer.toLowerCase().trim()) {
             return res.status(400).json({ message: 'Incorrect security answer' });
         }
 
