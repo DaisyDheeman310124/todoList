@@ -50,6 +50,16 @@
 
 .toggle-pwd { position: absolute; right: 1.2rem; cursor: pointer; opacity: 0.7; color: #c084fc; }
 
+@media (max-width: 480px) {
+  .login-card {
+    padding: 2rem;
+    margin: 1rem;
+    width: 100%;
+  }
+  .brand-logo { font-size: 2rem; }
+  .login-header h2 { font-size: 1.5rem; }
+}
+
 .btn-auth-submit {
   background: linear-gradient(135deg, #c084fc, #6366f1);
   color: white;
