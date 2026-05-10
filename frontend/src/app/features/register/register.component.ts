@@ -2,8 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TaskService } from '../services/task.service';
-import { ToastService } from '../services/toast.service';
+import { TaskService } from '../../core/services/task.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-register',
@@ -14,10 +14,8 @@ import { ToastService } from '../services/toast.service';
 })
 export class RegisterComponent {
   registerForm: FormGroup;
-  showTerms = false;
-  
-  showPassword = signal(false);
-  showConfirmPassword = signal(false);
+  showPassword = false;
+  isLoading = signal(false);
 
   fb = inject(FormBuilder);
   taskService = inject(TaskService);
@@ -27,12 +25,10 @@ export class RegisterComponent {
   constructor() {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
+      securityAnswer: ['', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', Validators.required],
-      securityQuestion: ['', Validators.required],
-      securityAnswer: ['', Validators.required],
-      termsAccepted: [false, Validators.requiredTrue]
-    }, { validators: this.passwordMatchValidator });
+      confirmPassword: ['', [Validators.required]]
+    }, { validator: this.passwordMatchValidator });
   }
 
   passwordMatchValidator(g: FormGroup) {
@@ -40,30 +36,24 @@ export class RegisterComponent {
       ? null : { 'mismatch': true };
   }
 
-  togglePassword() {
-    this.showPassword.update(v => !v);
-  }
-
-  toggleConfirmPassword() {
-    this.showConfirmPassword.update(v => !v);
-  }
-
-  register() {
+  onSubmit() {
     if (this.registerForm.invalid) {
-      this.toast.show('Please fill the form correctly', 'error');
+      this.toast.show('Please fill all fields correctly', 'error');
       return;
     }
 
-    this.taskService.register(this.registerForm.value).subscribe({
+    this.isLoading.set(true);
+    const { email, password, securityAnswer } = this.registerForm.value;
+    
+    this.taskService.register({ email, password, securityAnswer }).subscribe({
       next: () => {
-        this.toast.show('Registration Successful! Please login.');
+        this.toast.show('Account created! Please log in.');
         this.router.navigate(['/login']);
       },
       error: (err) => {
+        this.isLoading.set(false);
         this.toast.show(err.error?.message || 'Registration failed', 'error');
       }
     });
   }
-
-  get f() { return this.registerForm.controls; }
 }

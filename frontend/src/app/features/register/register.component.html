@@ -1,0 +1,80 @@
+<div class="auth-container">
+  <div class="auth-card animate-fade-in">
+    <div class="auth-header">
+      <div class="logo">💠</div>
+      <h1>Create Account<span>.</span></h1>
+      <p>Join TaskMinder and start organizing your life today.</p>
+    </div>
+
+    <form [formGroup]="registerForm" (submit)="onSubmit()" class="auth-form">
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrapper">
+          <span class="icon">📧</span>
+          <input 
+            type="email" 
+            formControlName="email" 
+            placeholder="name@company.com"
+            [class.invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Security Question: What is your favorite city?</label>
+        <div class="input-wrapper">
+          <span class="icon">🏙️</span>
+          <input 
+            type="text" 
+            formControlName="securityAnswer" 
+            placeholder="e.g. New York"
+            [class.invalid]="registerForm.get('securityAnswer')?.invalid && registerForm.get('securityAnswer')?.touched"
+          />
+        </div>
+        <small class="hint">Required for password recovery</small>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrapper">
+            <span class="icon">🔒</span>
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              formControlName="password" 
+              placeholder="••••••••"
+              [class.invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <div class="input-wrapper">
+            <span class="icon">🛡️</span>
+            <input 
+              [type]="showPassword ? 'text' : 'password'" 
+              formControlName="confirmPassword" 
+              placeholder="••••••••"
+              [class.invalid]="registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="pwd-options">
+        <span class="toggle-pwd" (click)="showPassword = !showPassword">
+          {{ showPassword ? '👁️ Hide' : '👁️ Show' }} passwords
+        </span>
+      </div>
+
+      <button type="submit" class="btn-auth-submit" [disabled]="registerForm.invalid">
+        Create free account
+      </button>
+
+      <div class="auth-footer">
+        Already have an account? <a routerLink="/login">Log in here</a>
+      </div>
+    </form>
+  </div>
+</div>

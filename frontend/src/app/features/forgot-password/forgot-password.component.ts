@@ -2,8 +2,8 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TaskService } from '../services/task.service';
-import { ToastService } from '../services/toast.service';
+import { TaskService } from '../../core/services/task.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-forgot-password',

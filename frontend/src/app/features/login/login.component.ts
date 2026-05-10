@@ -2,8 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TaskService } from '../services/task.service';
-import { ToastService } from '../services/toast.service';
+import { TaskService } from '../../core/services/task.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -14,7 +14,8 @@ import { ToastService } from '../services/toast.service';
 })
 export class LoginComponent {
   loginForm: FormGroup;
-  showPassword = signal(false);
+  showPassword = false;
+  isLoading = signal(false);
   
   fb = inject(FormBuilder);
   taskService = inject(TaskService);
@@ -28,29 +29,26 @@ export class LoginComponent {
     });
   }
 
-  togglePassword() {
-    this.showPassword.update(v => !v);
-  }
-
-  login() {
+  onSubmit() {
     if (this.loginForm.invalid) {
       this.toast.show('Please fix the errors in the form', 'error');
       return;
     }
 
+    this.isLoading.set(true);
     this.taskService.login(this.loginForm.value).subscribe({
       next: (res) => {
         localStorage.setItem('token', res.token);
         localStorage.setItem('userEmail', res.email);
-        this.toast.show('Login Successful!');
+        this.toast.show('Welcome back to TaskMinder!');
         this.router.navigate(['/todo']);
       },
       error: (err) => {
+        this.isLoading.set(false);
         this.toast.show(err.error?.message || 'Login failed', 'error');
       }
     });
   }
 
-  // Helper for easy access to form fields
   get f() { return this.loginForm.controls; }
 }

@@ -1,0 +1,281 @@
+<div class="dashboard-container">
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="logo-area-header">
+        <div class="logo-icon">💠</div>
+        <h2 class="logo-text">TaskMinder<span>.</span></h2>
+      </div>
+
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Search tasks..." 
+        />
+      </div>
+
+      <div class="header-actions-right">
+        @if (isAdmin()) {
+          <button class="btn-admin-toggle" (click)="showAdminPanel.set(!showAdminPanel())">
+            {{ showAdminPanel() ? '✕ Close Admin' : '🛡️ Admin Panel' }}
+          </button>
+        }
+        <div class="header-user">
+          <div class="user-avatar-small">
+            <img [src]="'https://ui-avatars.com/api/?name=' + displayName() + '&background=c084fc&color=fff'" alt="Avatar">
+          </div>
+          <div class="user-info-text">
+            <span class="user-name-small">{{ displayName() }}</span>
+            <span class="user-email-small">{{ userEmail() }}</span>
+          </div>
+        </div>
+        <button class="btn-logout-header" (click)="triggerConfirm('logout')" title="Logout">
+          Log out ↩️
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <section class="tasks-page">
+      
+      <!-- Admin Management Section -->
+      @if (isAdmin() && showAdminPanel()) {
+        <div class="admin-dashboard card animate-slide-down">
+          <div class="admin-header-row">
+            <div class="admin-header">
+              <h3>🛡️ User Management Console</h3>
+              <p>Monitor and manage total {{ users().length }} users.</p>
+            </div>
+            <div class="admin-search">
+              <input 
+                type="text" 
+                [ngModel]="adminSearchQuery()" 
+                (ngModelChange)="onAdminSearch($event)"
+                placeholder="🔍 Search users by email..." 
+              />
+            </div>
+          </div>
+
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>User Email</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of paginatedUsers(); track user._id) {
+                  <tr>
+                    <td>{{ user.email }}</td>
+                    <td>
+                      <span class="badge" [class.badge-danger]="user.blocked" [class.badge-success]="!user.blocked">
+                        {{ user.blocked ? 'Blocked' : 'Active' }}
+                      </span>
+                    </td>
+                    <td class="table-actions">
+                      <button class="btn-table-warn" (click)="blockUser(user._id)">
+                        {{ user.blocked ? '🔓 Unblock' : '🚫 Block' }}
+                      </button>
+                      <button class="btn-table-danger" (click)="triggerConfirm('deleteUser', user._id)">🗑️ Delete</button>
+                      <button class="btn-table-view" (click)="onUserChange(user._id); showAdminPanel.set(false)">👁️ View Tasks</button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="empty-table">No users found matching your search.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Controls -->
+          @if (totalPages() > 1) {
+            <div class="pagination-controls">
+              <button 
+                class="btn-pagination" 
+                [disabled]="adminCurrentPage() === 0" 
+                (click)="prevPage()"
+              >
+                ← Previous
+              </button>
+              <span class="page-indicator">Page {{ adminCurrentPage() + 1 }} of {{ totalPages() }}</span>
+              <button 
+                class="btn-pagination" 
+                [disabled]="adminCurrentPage() >= totalPages() - 1" 
+                (click)="nextPage()"
+              >
+                Next →
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="tasks-header">
+        <h1 class="page-title">
+          {{ selectedUserId() ? 'Managing User Tasks' : 'My Tasks' }}
+          @if (selectedUserId()) {
+            <button class="btn-reset-view" (click)="onUserChange('')">↩ Back to mine</button>
+          }
+        </h1>
+        <div class="header-actions">
+          <button class="btn-new-task" (click)="showAddForm.set(!showAddForm())">
+            {{ showAddForm() ? '✕ Close' : 'New task +' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Add/Edit Task Form -->
+      @if (showAddForm()) {
+        <div class="card add-task-card animate-slide-down">
+          <form [formGroup]="taskForm" (submit)="saveTask()" class="task-form-horizontal">
+            <div class="input-row">
+              <input type="text" formControlName="title" placeholder="What is the task name?" />
+              <select formControlName="priority" class="priority-select">
+                <option value="low">Low Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="high">High Priority</option>
+              </select>
+              <button class="btn-save" [disabled]="taskForm.invalid">
+                {{ editingId ? '✨ Update Task' : '➕ Add to List' }}
+              </button>
+            </div>
+            <textarea formControlName="description" placeholder="Add more details (optional)..."></textarea>
+          </form>
+        </div>
+      }
+
+      <!-- Kanban Board Layout -->
+      <div class="kanban-board">
+        <!-- To Do Column -->
+        <div class="board-column todo-col">
+          <div class="column-header">
+            <span class="col-icon">📋</span>
+            <h3>To do</h3>
+            <span class="count-badge">{{ getTasksByStatus('todo').length }}</span>
+          </div>
+          <div class="task-cards-area">
+            @for (task of getTasksByStatus('todo'); track task._id) {
+              <div class="task-card">
+                <div class="card-header">
+                  <div class="priority-badge" [attr.data-priority]="task.priority || 'medium'">
+                    {{ task.priority || 'medium' }}
+                  </div>
+                  <div class="card-actions">
+                    <button class="btn-card-edit" (click)="editTask(task)">✏️</button>
+                    <button class="btn-card-delete" (click)="triggerConfirm('deleteTask', task._id!)">🗑️</button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <h4 class="task-card-title">{{ task.title }}</h4>
+                  <p class="task-card-desc">{{ task.description }}</p>
+                </div>
+                <div class="card-footer">
+                  <button class="btn-move" (click)="updateStatus(task, 'in-progress')">Start Work 🚀</button>
+                </div>
+              </div>
+            } @empty {
+              <div class="empty-col-state">
+                <p>All caught up! ☕</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- In Progress Column -->
+        <div class="board-column progress-col">
+          <div class="column-header">
+            <span class="col-icon">⏳</span>
+            <h3>In progress</h3>
+            <span class="count-badge">{{ getTasksByStatus('in-progress').length }}</span>
+          </div>
+          <div class="task-cards-area">
+            @for (task of getTasksByStatus('in-progress'); track task._id) {
+              <div class="task-card">
+                <div class="card-header">
+                  <div class="priority-badge" [attr.data-priority]="task.priority || 'medium'">
+                    {{ task.priority || 'medium' }}
+                  </div>
+                  <div class="card-actions">
+                    <button class="btn-card-edit" (click)="editTask(task)">✏️</button>
+                    <button class="btn-card-delete" (click)="triggerConfirm('deleteTask', task._id!)">🗑️</button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <h4 class="task-card-title">{{ task.title }}</h4>
+                  <p class="task-card-desc">{{ task.description }}</p>
+                </div>
+                <div class="card-footer">
+                  <button class="btn-move" (click)="updateStatus(task, 'done')">Complete ✅</button>
+                  <button class="btn-move back" (click)="updateStatus(task, 'todo')">Pause ⏸️</button>
+                </div>
+              </div>
+            } @empty {
+              <div class="empty-col-state">
+                <p>No tasks in progress.</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Done Column -->
+        <div class="board-column done-col">
+          <div class="column-header">
+            <span class="col-icon">✅</span>
+            <h3>Done</h3>
+            <span class="count-badge">{{ getTasksByStatus('done').length }}</span>
+          </div>
+          <div class="task-cards-area">
+            @for (task of getTasksByStatus('done'); track task._id) {
+              <div class="task-card done">
+                <div class="card-header">
+                  <span class="status-done-tag">COMPLETED</span>
+                  <div class="card-actions">
+                    <button class="btn-card-delete" (click)="triggerConfirm('deleteTask', task._id!)">🗑️</button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <h4 class="task-card-title">{{ task.title }}</h4>
+                  <p class="task-card-desc">{{ task.description }}</p>
+                </div>
+                <div class="card-footer">
+                  <button class="btn-move back" (click)="updateStatus(task, 'in-progress')">↩ Re-open</button>
+                </div>
+              </div>
+            } @empty {
+              <div class="empty-col-state">
+                <p>Nothing completed yet.</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Premium Confirmation Modal -->
+  @if (showConfirmModal()) {
+    <div class="modal-overlay animate-fade-in">
+      <div class="modal-card animate-zoom-in">
+        <div class="modal-header">
+          <h3>{{ confirmTitle() }}</h3>
+          <button class="btn-modal-close" (click)="showConfirmModal.set(false)">✕</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ confirmMessage() }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-modal-cancel" (click)="showConfirmModal.set(false)">Cancel</button>
+          <button class="btn-modal-confirm" (click)="onConfirmAction()">Yes, Continue</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

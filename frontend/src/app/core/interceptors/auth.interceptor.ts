@@ -5,9 +5,21 @@ import { finalize, catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class LoaderService {
+  private totalRequests = 0;
   isLoading = signal(false);
-  show() { this.isLoading.set(true); }
-  hide() { this.isLoading.set(false); }
+
+  show() {
+    this.totalRequests++;
+    this.isLoading.set(true);
+  }
+
+  hide() {
+    this.totalRequests--;
+    if (this.totalRequests <= 0) {
+      this.totalRequests = 0;
+      this.isLoading.set(false);
+    }
+  }
 }
 
 @Injectable()
@@ -15,10 +27,12 @@ export class AuthInterceptor implements HttpInterceptor {
   constructor(private loader: LoaderService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    // Start loader
     this.loader.show();
+
     const token = localStorage.getItem('token');
-    
     let authReq = req;
+    
     if (token) {
       authReq = req.clone({
         setHeaders: { Authorization: `Bearer ${token}` }
@@ -29,7 +43,10 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         return throwError(() => error);
       }),
-      finalize(() => this.loader.hide())
+      finalize(() => {
+        // Stop loader only when request finishes
+        this.loader.hide();
+      })
     );
   }
 }
